@@ -1,0 +1,54 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // ใช้ PostgreSQL สำหรับ Neon
+  url      = env("DATABASE_URL")
+}
+
+// ตาราง User สำหรับระบบ Authentication
+model User {
+  id       Int      @id @default(autoincrement())
+  username String   @unique
+  password String   // แนะนำให้ Hash รหัสผ่าน (เช่น bcrypt) ก่อนบันทึกลงฐานข้อมูล
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ตาราง Category (1 หมวดหมู่ มีหนังสือได้หลายเล่ม)
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  books     Book[]   // ความสัมพันธ์ One-to-Many กับ Book
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ตาราง Author (1 ผู้แต่ง มีหนังสือได้หลายเล่ม)
+model Author {
+  id        Int      @id @default(autoincrement())
+  name      String
+  books     Book[]   // ความสัมพันธ์ One-to-Many กับ Book
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ตาราง Book
+model Book {
+  id         Int      @id @default(autoincrement())
+  title      String
+  
+  // Foreign Keys
+  categoryId Int
+  authorId   Int
+
+  // การเชื่อมความสัมพันธ์ (Relations)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  author     Author   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
