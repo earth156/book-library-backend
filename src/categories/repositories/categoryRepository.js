@@ -1,4 +1,4 @@
-const prisma = require('../config/db');
+const prisma = require('../../config/db');
 
 class CategoryRepository {
     // ดึงข้อมูลหมวดหมู่ทั้งหมดจากฐานข้อมูล
