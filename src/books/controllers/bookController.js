@@ -12,7 +12,12 @@ class BookController {
 
     getBookById = async (req, res) => {
         try {
-            const book = await bookService.getBookById(req.params.id);
+            const bookId = parseInt(req.params.id, 10);
+            if (isNaN(bookId)) {
+                return res.status(400).json({ message: 'Invalid book ID format. Must be an integer.' });
+            }
+
+            const book = await bookService.getBookById(bookId);
             if (!book) {
                 return res.status(404).json({ message: 'Book not found' });
             }
@@ -24,12 +29,31 @@ class BookController {
 
     createBook = async (req, res) => {
         try {
-            const newBook = await bookService.createBook(req.body);
-            res.status(201).json(newBook); // 201 Created
+            const { title, categoryId, authorId } = req.body;
+
+            // 🛡️ Validation 1: เช็คค่าว่าง
+            if (!title || !title.trim() || !categoryId || !authorId) {
+                return res.status(400).json({ message: 'Title, categoryId, and authorId are required.' });
+            }
+
+            // 🛡️ Validation 2: เช็คว่าเป็นตัวเลขที่ถูกต้องไหม
+            const parsedCategory = parseInt(categoryId, 10);
+            const parsedAuthor = parseInt(authorId, 10);
+
+            if (isNaN(parsedCategory) || isNaN(parsedAuthor)) {
+                return res.status(400).json({ message: 'categoryId and authorId must be valid integers.' });
+            }
+
+            const newBook = await bookService.createBook({
+                title: title.trim(),
+                categoryId: parsedCategory,
+                authorId: parsedAuthor
+            });
+            res.status(201).json(newBook);
         } catch (error) {
             // ดัก Error กรณีส่ง categoryId หรือ authorId ที่ไม่มีในระบบ (Prisma Foreign Key Constraint)
             if (error.code === 'P2003') {
-                return res.status(400).json({ message: 'Invalid categoryId or authorId' });
+                return res.status(400).json({ message: 'Invalid categoryId or authorId (Foreign key constraint)' });
             }
             res.status(500).json({ message: 'Error creating book', error: error.message });
         }
@@ -37,8 +61,13 @@ class BookController {
 
     deleteBook = async (req, res) => {
         try {
-            await bookService.deleteBook(req.params.id);
-            res.status(204).send(); // 204 No Content (ลบสำเร็จ ไม่ต้องส่ง Data กลับ)
+            const bookId = parseInt(req.params.id, 10);
+            if (isNaN(bookId)) {
+                return res.status(400).json({ message: 'Invalid book ID format. Must be an integer.' });
+            }
+
+            await bookService.deleteBook(bookId);
+            res.status(204).send();
         } catch (error) {
             // ดัก Error กรณีพยายามลบ ID ที่ไม่มีในฐานข้อมูล (Prisma Record Not Found)
             if (error.code === 'P2025') {
