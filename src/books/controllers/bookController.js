@@ -67,7 +67,7 @@ class BookController {
             }
 
             await bookService.deleteBook(bookId);
-            res.status(204).send();
+            res.status(200).json({ message: 'Book deleted successfully' });
         } catch (error) {
             // ดัก Error กรณีพยายามลบ ID ที่ไม่มีในฐานข้อมูล (Prisma Record Not Found)
             if (error.code === 'P2025') {
